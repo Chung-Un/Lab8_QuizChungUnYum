@@ -154,7 +154,6 @@ public class GUI {
                     listaEnlazada.borrarNodo(cancion);
                     modeloLista.removeElement(cancion);
                     areaTexto.setText("");
-                    labelImg.setIcon(null);
                     if(reproductor!=null){
                         reproductor.stop();
                     }

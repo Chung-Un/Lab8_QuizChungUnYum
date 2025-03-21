@@ -72,11 +72,5 @@ public class Cancion {
         return titulo;
     }
     
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-        Cancion cancion = (Cancion) obj;
-        return titulo.equals(cancion.titulo); // Comparar por título
-    }
+
 }
