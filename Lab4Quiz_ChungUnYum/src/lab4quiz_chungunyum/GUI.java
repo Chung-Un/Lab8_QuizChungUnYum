@@ -11,6 +11,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.InputMismatchException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
@@ -43,6 +44,7 @@ public class GUI {
     private JPanel panelInfo;
     private JLabel labelImg;
     private Thread hiloReproducir,hiloPausar,hiloSiguiente;
+    private Reproductor reproductor =null;
     
     public GUI(){
         listaEnlazada = new ListaEnlazada();
@@ -89,6 +91,7 @@ public class GUI {
             @Override
             public void actionPerformed(ActionEvent e) {
                 
+                try{
                 String titulo = JOptionPane.showInputDialog(null, "Ingrese el titulo de su cancion: ", 
                 "Titulo", JOptionPane.QUESTION_MESSAGE);
                 
@@ -126,7 +129,8 @@ public class GUI {
                     }
                     else{
                         JOptionPane.showMessageDialog(null, "Por favor eliga un archivo mp3", "Error", JOptionPane.ERROR_MESSAGE);
-                    }
+                    } 
+                    
                     
                 }
                 else{
@@ -135,7 +139,10 @@ public class GUI {
                 }
                 
                 
-            }
+            }  catch (InputMismatchException x){
+                   JOptionPane.showMessageDialog(null, "Escriba un dato valido", "Error", JOptionPane.ERROR_MESSAGE);
+                } }
+                
         });
         
         JButton btnBorrar = new JButton("Borrar cancion");
@@ -145,6 +152,12 @@ public class GUI {
                 cancion = cancionesLista.getSelectedValue();
                 if(cancion!=null){
                     listaEnlazada.borrarNodo(cancion);
+                    modeloLista.removeElement(cancion);
+                    areaTexto.setText("");
+                    labelImg.setIcon(null);
+                    if(reproductor!=null){
+                        reproductor.stop();
+                    }
                 }
             }
         });
@@ -154,29 +167,21 @@ public class GUI {
         btnReproducir.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(hiloPausar!=null){
-                    hiloPausar.interrupt();
-                }
-                if(hiloSiguiente!=null){
-                    hiloSiguiente.interrupt();
+               cancion = cancionesLista.getSelectedValue();
+            if(cancion != null){
+                try {
+                
+                if(reproductor != null && !reproductor.isParado()){
+                    reproductor.stop();
                 }
                 
-                cancion = cancionesLista.getSelectedValue();
-                if(cancion !=null){
-                    hiloReproducir= new Thread(()->{
-                        try {
-                            Nodo nodoCancion = listaEnlazada.getNodo(cancion.getTitulo());
-                            listaEnlazada.reproducirCancion(nodoCancion);
-                        } catch (JavaLayerException ex) {
-                            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
-                        } catch (FileNotFoundException ex) {
-                            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-
-                    });
-                    hiloReproducir.start();;
+                reproductor = new Reproductor(cancion.getDireccionArchivo());
+                reproductor.play();
+                
+            } catch (JavaLayerException | FileNotFoundException ex) {
+                Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                 }
-                        
             }
         });
         
@@ -185,26 +190,9 @@ public class GUI {
         btnPausar.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                cancion = cancionesLista.getSelectedValue();
-                if(cancion !=null){
-                    if(hiloReproducir!=null){
-                        hiloReproducir.interrupt();
-                    }
-                    if(hiloSiguiente!=null){
-                        hiloSiguiente.interrupt();
-                    }
-                    hiloPausar = new Thread(()->{
-                        try {
-                            Nodo nodoCancion = listaEnlazada.getNodo(cancion.getTitulo());
-                            listaEnlazada.pararCancion(nodoCancion);
-                        }catch (FileNotFoundException | JavaLayerException ex) {
-                            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-
-                    });
-                    hiloPausar.start();
+                if (reproductor != null && !reproductor.isParado()) {
+                    reproductor.pause();
                 }
-                        
             }
         });
         
@@ -213,36 +201,23 @@ public class GUI {
         btnSiguiente.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                cancion = cancionesLista.getSelectedValue();
-                if(cancion !=null){
-                    if(hiloPausar!=null){
-                        hiloPausar.interrupt();
-                    }
-                    if(hiloReproducir!=null){
-                        hiloReproducir.interrupt();
-                    }
-                    
-                    hiloSiguiente = new Thread(()->{
-                        Nodo nodoCancion = listaEnlazada.getNodo(cancion.getTitulo());
-                            if(nodoCancion.getSiguiente()!=null){
-                                try {
-                                    listaEnlazada.reproducirSiguienteCancion(nodoCancion);
-                                } catch (JavaLayerException ex) {
-                                    Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
-                                } catch (FileNotFoundException ex) {
-                                    Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
-                                }
+               cancion = cancionesLista.getSelectedValue();
+                if (cancion != null) {
+                    Nodo nodoCancion = listaEnlazada.getNodo(cancion.getTitulo());
+                    if (nodoCancion.getSiguiente() != null) {
+                        try {
+                            if (reproductor != null) {
+                                reproductor.stop(); 
                             }
-                            else{
-                                JOptionPane.showMessageDialog(null, "No existe una cancion siguiente","Erorr",
-                                JOptionPane.ERROR_MESSAGE);
-                            }
-                            
-                    });
-                    hiloSiguiente.start();
-                    
+                            reproductor = new Reproductor(nodoCancion.getSiguiente().getCancion().getDireccionArchivo());
+                            reproductor.play();
+                        } catch (JavaLayerException | FileNotFoundException ex) {
+                            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(null, "No existe una cancion siguiente", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
-                        
             }
         });
         
@@ -271,7 +246,6 @@ public class GUI {
    
     
     private void mostrarInfo(Cancion cancionSeleccionada){
-        System.out.println("Titulo " + cancionSeleccionada.getTitulo());
         String info = "Titulo: " +cancionSeleccionada.getTitulo() + "\nArtista: " + cancionSeleccionada.getArtista() +"\nGenero: " +
                 cancionSeleccionada.getGenero() + "\nDuracion: " + cancionSeleccionada.getDuracion() + " segundos";
         areaTexto.setText(info);

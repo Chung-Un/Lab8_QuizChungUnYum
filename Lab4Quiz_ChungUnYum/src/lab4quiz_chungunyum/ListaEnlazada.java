@@ -5,6 +5,7 @@
 package lab4quiz_chungunyum;
 
 import java.io.FileNotFoundException;
+import javax.swing.JOptionPane;
 import javazoom.jl.decoder.JavaLayerException;
 
 /**
@@ -33,14 +34,15 @@ public class ListaEnlazada {
     }
     
     public void borrarNodo(Cancion cancion){
-        if(nodoCabeza!=null && nodoCabeza.cancion == cancion){
+        if(nodoCabeza!=null && nodoCabeza.cancion.equals(cancion)){
             nodoCabeza = nodoCabeza.siguiente; 
         }
         else{
             Nodo nodoActual = nodoCabeza;
             while( nodoActual!=null && nodoActual.getSiguiente() != null){
-                if(nodoActual.getSiguiente().getCancion() == cancion){
-                    nodoActual.enlazarSiguiente(nodoActual.getSiguiente().getSiguiente()); 
+                if(nodoActual.getSiguiente().getCancion().equals(cancion)){
+                    nodoActual.enlazarSiguiente(nodoActual.getSiguiente().getSiguiente());
+                    return;
                 }
                 nodoActual = nodoActual.getSiguiente();
             }
@@ -57,32 +59,4 @@ public class ListaEnlazada {
         return null;
     }
    
-    public void reproducirCancion(Nodo nodo) throws JavaLayerException, FileNotFoundException{
-        Reproductor reproductor = new Reproductor(nodo.getCancion().getDireccionArchivo());
-        reproductor.play();
-
-    }   
-    
-    public void reproducirSiguienteCancion(Nodo nodo) throws JavaLayerException, FileNotFoundException{
-        Reproductor reproductor = new Reproductor(nodo.getSiguiente().getCancion().getDireccionArchivo());
-        reproductor.play();
-
-    }
-    
-    public void pararCancion(Nodo nodo) throws JavaLayerException, FileNotFoundException{
-        Reproductor reproductor = new Reproductor(nodo.getCancion().getDireccionArchivo());
-        reproductor.stop();
-    }
-    
-    
-    public void clearLista(){
-        Nodo nodoActual = nodoCabeza;
-        
-        while(nodoActual!=null){
-            Nodo nodoTemp = nodoActual.getSiguiente();
-            nodoActual.siguiente = null;
-            nodoActual = nodoTemp;
-        }
-        nodoCabeza = null;
-    }
 }
